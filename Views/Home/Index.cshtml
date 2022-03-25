@@ -1,0 +1,113 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<button id="$start">Start</button>
+@Html.ActionLink("hello", "mitm")
+<script>
+    $start.onclick = () => {
+        //debugger;
+        const fileStream = streamSaver.createWriteStream('archive.zip')
+
+        const file1 = new File(['file1 content'], 'streamsaver-zip-example/file1.txt')
+
+        // File Like object works too
+        const file2 = {
+            name: 'streamsaver-zip-example/file2.txt',
+            stream() {
+                // if you want to play it cool and use new api's
+                //
+                // const { readable, writable } = new TextEncoderStream()
+                // writable.write('file2 content')
+                // writable.close()
+                // return readable
+
+                return new ReadableStream({
+                    start(ctrl) {
+                        ctrl.enqueue(new TextEncoder().encode('file2 generated with readableStream'))
+                        ctrl.close()
+                    }
+                })
+            }
+        }
+
+        const blob = new Blob(['support blobs too'])
+
+        const file3 = {
+            name: 'streamsaver-zip-example/blob-example.txt',
+            stream: () => blob.stream()
+        }
+
+        var namedURL = [
+            //{ name: "Pilot (a.k.a. ), The Nanny.m4v", URL: "http://localhost:19694/FIles/s01e01%20Pilot%20(a.k.a.%20The%20Nanny),%20The%20Nanny.m4v" },
+            //{ name: "Smoke Gets in Your Lies.m4v", URL: "http://localhost:19694/FIles/s01e02%20Smoke%20Gets%20in%20Your%20Lies,%20The%20Nanny.m4v" },
+            //{ name: "My Fair Nanny.m4v", URL: "http://localhost:19694/FIles/s01e03%20My%20Fair%20Nanny,%20The%20Nanny.m4v" },
+            //{ name: "The Nuchslep.m4v", URL: "http://localhost:19694/FIles/s01e04%20The%20Nuchslep,%20The%20Nanny.m4v" },
+            //{ name: "Here Comes the Brood.m4v", URL: "http://localhost:19694/FIles/s01e05%20Here%20Comes%20the%20Brood,%20The%20Nanny.m4v" },
+            //{ name: "The Butler, the Husband, the Wife and Her Mother.m4v", URL: "http://localhost:19694/FIles/s01e06%20The%20Butler,%20the%20Husband,%20the%20Wife%20and%20Her%20Mother,%20The%20Nanny.m4v" },
+            //{ name: "Evergreen short Drink v1.mp4", URl: "http://www.theevergreen.co/wp-content/uploads/videos/Evergreen%20short%20Drink%20v1.mp4" },
+
+
+            { name: "a75736d4-7a93-42a2-8791-42e52f0e0641_1.mp4", URL:"http://51.emamcloud.com/emamfolders/unit1/p/a75736d4-7a93-42a2-8791-42e52f0e0641_1.mp4"},
+            { name: "dd950183-53d0-4b7c-8355-5a8d8814f327_1.mp4", URL: "http://51.emamcloud.com/emamfolders/unit1/p/dd950183-53d0-4b7c-8355-5a8d8814f327_1.mp4" },
+            { name: "a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg", URL: "http://51.emamcloud.com/emamfolders/unit1/p//a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg" },
+            { name: "dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg", URL: "http://51.emamcloud.com/emamfolders/unit1/p//dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg" },
+
+        ];
+
+        // In a ideall world i would just have used a TransformStream
+        // where you would get `{ readable writable } = new TransformStream()`
+        // `readable` would be piped to streamsaver, and the writer would accept
+        // file-like object, but that made it dependent on TransformStream and WritableStream
+        // So i built ZIP-Stream simular to a ReadbleStream but you enqueue
+        // file-like objects meaning it should have at at the very least { name, stream() }
+        //
+        // it supports pull() too that gets called when it ask for more files.
+        //
+        // NOTE: My zip library can't generate zip's over 4gb and has no compresseion
+        //       it was built solo for the purpus of saving multiple files in browser
+        //
+        //       windows gets confused when file & folders starts with /
+        const readableZipStream = new ZIP({
+            start(ctrl) {
+                //ctrl.enqueue(file1)
+                //ctrl.enqueue(file2)
+                //ctrl.enqueue(file3)
+                //ctrl.enqueue({ name: 'streamsaver-zip-example/empty folder', directory: true })
+                // ctrl.close()
+            },
+            async pull(ctrl) {
+                // Gets executed everytime zip.js asks for more data
+                //const url = 'https://d8d913s460fub.cloudfront.net/videoserver/cat-test-video-320x240.mp4'
+                //const res = await fetch(url)
+                //const stream = () => res.body
+                //const name = 'streamsaver-zip-example/cat.mp4'
+                //ctrl.enqueue({ name, stream })
+                // if (done adding all files)
+                //  ctrl.close()
+                $.each(namedURL, async function (index, record) {
+                    console.log(index, record.URL);
+                    const url = record.URL
+                    const res = await fetch(url)
+                    const stream = () => res.body
+                    const name = record.name
+                    ctrl.enqueue({ name, stream })
+                    if (index == (namedURL.length - 1))
+                        ctrl.close()
+                });
+            }
+        })
+
+        // more optimized
+        if (window.WritableStream && readableZipStream.pipeTo) {
+            return readableZipStream.pipeTo(fileStream).then(() => console.log('done writing'))
+        }
+
+        // less optimized
+        const writer = fileStream.getWriter()
+        const reader = readableZipStream.getReader()
+        const pump = () => reader.read()
+            .then(res => res.done ? writer.close() : writer.write(res.value).then(pump))
+
+        pump()
+    }
+</script>
