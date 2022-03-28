@@ -1,59 +1,73 @@
 ﻿@{
     ViewBag.Title = "Home Page";
 }
-<button id="$start">Start</button>
-@Html.ActionLink("hello", "mitm")
+
+<div class="container-fluid card">
+    <h1>multiple file download as zip</h1>
+    <button id="$addControl" title="Add control" class="btn"><i class="glyphicon-plus"></i></button>
+    <button id="$start" class="btn">Start</button>
+    <div id="controlHolder">
+        <div><input type="text" id="control-0" placeholder="Url" /><button class="btn" onclick="removerCntrl('control-0')" title="Remove control"><i class="glyphicon-minus"></i></button></div>
+    </div>
+</div>
 <script>
-    $start.onclick = () => {
-        //debugger;
-        const fileStream = streamSaver.createWriteStream('archive.zip')
+    var namedURL = [];
 
-        const file1 = new File(['file1 content'], 'streamsaver-zip-example/file1.txt')
-
-        // File Like object works too
-        const file2 = {
-            name: 'streamsaver-zip-example/file2.txt',
-            stream() {
-                // if you want to play it cool and use new api's
-                //
-                // const { readable, writable } = new TextEncoderStream()
-                // writable.write('file2 content')
-                // writable.close()
-                // return readable
-
-                return new ReadableStream({
-                    start(ctrl) {
-                        ctrl.enqueue(new TextEncoder().encode('file2 generated with readableStream'))
-                        ctrl.close()
-                    }
+    const removerCntrl = (id) => {
+        $("#" + id).parent().remove();
+    }
+    const colletURL = () => {
+        $("input[id^=control-]").each(function (ind, rec) {
+            var url = $(rec).val();
+            if (url != "" && url != null && url != undefined) {
+                var filename = decodeURIComponent(url.substring(url.lastIndexOf('/') + 1));
+                namedURL.push({
+                    name: filename,
+                    URL: url
                 })
             }
-        }
+        });
+        console.log(namedURL);
+    }
 
-        const blob = new Blob(['support blobs too'])
+    $addControl.onclick = () => {
+        var id = "control-" + $("input[id^=control-]").length;
+        $("#controlHolder").append("<div><input type='text' id='" + id + "' placeholder='Url'/><button class='btn' onclick='removerCntrl(\"" + id + "\")' title='Remove control'><i class='glyphicon-minus'></i></button></div>");
+    }
 
-        const file3 = {
-            name: 'streamsaver-zip-example/blob-example.txt',
-            stream: () => blob.stream()
-        }
+    $start.onclick = () => {
+        const fileStream = streamSaver.createWriteStream('archive.zip')
 
-        var namedURL = [
-            //{ name: "Pilot (a.k.a. ), The Nanny.m4v", URL: "http://localhost:19694/FIles/s01e01%20Pilot%20(a.k.a.%20The%20Nanny),%20The%20Nanny.m4v" },
-            //{ name: "Smoke Gets in Your Lies.m4v", URL: "http://localhost:19694/FIles/s01e02%20Smoke%20Gets%20in%20Your%20Lies,%20The%20Nanny.m4v" },
-            //{ name: "My Fair Nanny.m4v", URL: "http://localhost:19694/FIles/s01e03%20My%20Fair%20Nanny,%20The%20Nanny.m4v" },
-            //{ name: "The Nuchslep.m4v", URL: "http://localhost:19694/FIles/s01e04%20The%20Nuchslep,%20The%20Nanny.m4v" },
-            //{ name: "Here Comes the Brood.m4v", URL: "http://localhost:19694/FIles/s01e05%20Here%20Comes%20the%20Brood,%20The%20Nanny.m4v" },
-            //{ name: "The Butler, the Husband, the Wife and Her Mother.m4v", URL: "http://localhost:19694/FIles/s01e06%20The%20Butler,%20the%20Husband,%20the%20Wife%20and%20Her%20Mother,%20The%20Nanny.m4v" },
-            //{ name: "Evergreen short Drink v1.mp4", URl: "http://www.theevergreen.co/wp-content/uploads/videos/Evergreen%20short%20Drink%20v1.mp4" },
+        colletURL();
 
+        //const file1 = new File(['file1 content'], 'streamsaver-zip-example/file1.txt')
 
-            { name: "a75736d4-7a93-42a2-8791-42e52f0e0641_1.mp4", URL:"http://51.emamcloud.com/emamfolders/unit1/p/a75736d4-7a93-42a2-8791-42e52f0e0641_1.mp4"},
-            { name: "dd950183-53d0-4b7c-8355-5a8d8814f327_1.mp4", URL: "http://51.emamcloud.com/emamfolders/unit1/p/dd950183-53d0-4b7c-8355-5a8d8814f327_1.mp4" },
-            { name: "a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg", URL: "http://51.emamcloud.com/emamfolders/unit1/p//a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg" },
-            { name: "dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg", URL: "http://51.emamcloud.com/emamfolders/unit1/p//dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg" },
+        //// File Like object works too
+        //const file2 = {
+        //    name: 'streamsaver-zip-example/file2.txt',
+        //    stream() {
+        //        // if you want to play it cool and use new api's
+        //        //
+        //        // const { readable, writable } = new TextEncoderStream()
+        //        // writable.write('file2 content')
+        //        // writable.close()
+        //        // return readable
 
-        ];
+        //        return new ReadableStream({
+        //            start(ctrl) {
+        //                ctrl.enqueue(new TextEncoder().encode('file2 generated with readableStream'))
+        //                ctrl.close()
+        //            }
+        //        })
+        //    }
+        //}
 
+        //const blob = new Blob(['support blobs too'])
+
+        //const file3 = {
+        //    name: 'streamsaver-zip-example/blob-example.txt',
+        //    stream: () => blob.stream()
+        //}
         // In a ideall world i would just have used a TransformStream
         // where you would get `{ readable writable } = new TransformStream()`
         // `readable` would be piped to streamsaver, and the writer would accept
@@ -85,7 +99,7 @@
                 // if (done adding all files)
                 //  ctrl.close()
                 $.each(namedURL, async function (index, record) {
-                    console.log(index, record.URL);
+                    // try {
                     const url = record.URL
                     const res = await fetch(url)
                     const stream = () => res.body
@@ -93,6 +107,10 @@
                     ctrl.enqueue({ name, stream })
                     if (index == (namedURL.length - 1))
                         ctrl.close()
+                    //}
+                    //catch (ex) {
+                    //    console.log("error : ", record, ex);
+                    //}
                 });
             }
         })

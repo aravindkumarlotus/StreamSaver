@@ -13,6 +13,11 @@ namespace StreamSaver.Controllers
             return View();
         }
 
+        public ActionResult About()
+        {
+            return View();
+        }
+
         public ActionResult mitm()
         {
             return new FilePathResult("~/Views/Home/mitm.html", "text/html");

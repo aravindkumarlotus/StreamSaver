@@ -1,7 +1,34 @@
 ﻿@{
     ViewBag.Title = "About";
 }
-<h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
+<input type="button" value="start" onclick="downfiles()" />
+<script>
 
-<p>Use this area to provide additional information.</p>
+
+    function downfiles() {
+        const urls = ["https://51.emamcloud.com/emamfolders/unit1/p/a75736d4-7a93-42a2-8791-42e52f0e0641_1.mp4",
+            "https://51.emamcloud.com/emamfolders/unit1/p/dd950183-53d0-4b7c-8355-5a8d8814f327_1.mp4",
+            "http://51.emamcloud.com/emamfolders/unit1/p//a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg",
+            "http://51.emamcloud.com/emamfolders/unit1/p//dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg"];
+        //const urls = ["http://51.emamcloud.com/emamfolders/unit1/p//a75736d4-7a93-42a2-8791-42e52f0e0641_0.jpg",  "http://51.emamcloud.com/emamfolders/unit1/p//dd950183-53d0-4b7c-8355-5a8d8814f327_0.jpg"];
+        const zip = new JSZip();
+        let count = 0;
+        const zipFilename = "evidence.zip";
+        urls.forEach(async function (url) {
+            const urlArr = url.split('/');
+            const filename = urlArr[urlArr.length - 1];
+            try {
+                const file = await JSZipUtils.getBinaryContent(url)
+                zip.file(filename, file, { binary: true });
+                count++;
+                if (count === urls.length) {
+                    zip.generateAsync({ type: 'blob' }).then(function (content) {
+                        saveAs(content, zipFilename);
+                    });
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        });
+    }
+</script>
